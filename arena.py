@@ -1,64 +1,79 @@
-import os
 import time
-from sistem.sahne_yazici import yaz, sahne
-from colorama import init
+from sistem.sahne_yazici import sahne, yaz, temizle
+from sistem.saldiri_motoru import sabotaj_et
+import importlib.util
+import sys
+import traceback
 
-init(autoreset=True)
+def dinamik_import(dosya_yolu, modul_adi):
+    spec = importlib.util.spec_from_file_location(modul_adi, dosya_yolu)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
 
-def bekle(saniye=2):
-    time.sleep(saniye)
-    os.system('clear' if os.name == 'posix' else 'cls')
+def intro():
+    temizle()
+    yaz("//..//", hiz=0.05, renk="\033[90m")
+    time.sleep(0.5)
+    yaz("KOD SAVAŞI BAŞLIYOR...\n", hiz=0.08, renk="\033[92m")
+    time.sleep(1)
 
-def baslat_giris_animasyonu():
-    yaz("\n\n// Kod Arenası'na Hoş Geldiniz //", hiz=0.05)
-    bekle(1)
-    yaz("~ Hazırlıklar tamamlanıyor...", hiz=0.03)
-    bekle(1)
-    yaz("~ Takımlar kodlarını yükledi...", hiz=0.03)
-    bekle(1)
-    yaz("\n⚔️  KOD SAVAŞI BAŞLIYOR ⚔️\n", hiz=0.06)
-    bekle(2)
-    bekle()
-    os.system('clear' if os.name == 'posix' else 'cls')
+def calistir_fonksiyon(modul, fonk_adi):
+    try:
+        fonk = getattr(modul, fonk_adi)
+        fonk()
+        return True
+    except Exception as e:
+        sahne([
+            f"💥 Hata! Fonksiyon '{fonk_adi}' çalıştırılamadı.",
+            f"Sebep: {str(e)}",
+        ], renk="\033[91m", bekle=2)
+        return False
 
-def yukle_takimlar():
-    from takimlar.kodkalkani import Takim as KodKalkani
-    from takimlar.zer0byte import Takim as Zer0Byte
-    return KodKalkani(), Zer0Byte()
+def savas():
+    takimlar = [
+        ("KodKalkanı", "takimlar/kodkalkani.py"),
+        ("Zer0Byte", "takimlar/zer0byte.py")
+    ]
 
-def baslat_savas(takimA, takimB):
-    sahne(f"{takimA.isim} açılış saldırısını başlattı...")
-    takimA.saldir(takimB)
-    bekle()
+    importlib.invalidate_caches()
 
-    sahne(f"{takimB.isim} hızlıca karşılık veriyor!")
-    takimB.saldir(takimA)
-    bekle()
+    for round_num in range(1, 4):
+        temizle()
+        sahne([f"🔥 Raund {round_num} Başlıyor!"], renk="\033[93m", bekle=1)
 
-    sahne(f"{takimA.isim} savunma sistemlerini yükseltiyor...")
-    takimA.savun()
-    bekle()
+        # Takım A saldırıyor, Takım B savunuyor
+        sabotaj_et(takimlar[1][1], "saldir")
+        modA = dinamik_import(takimlar[0][1], "kodkalkani")
+        modB = dinamik_import(takimlar[1][1], "zer0byte")
 
-    sahne(f"{takimB.isim} exploit paketleriyle yüklendi!")
-    takimB.saldir(takimA)
-    bekle()
+        sahne([f"{takimlar[0][0]} saldırıyor..."], renk="\033[92m", bekle=1)
+        if not calistir_fonksiyon(modA, "saldir"):
+            sahne([f"🏆 {takimlar[1][0]} kazandı!"], renk="\033[91m", bekle=3)
+            return
 
-    sahne("⚖️  Sonuçlar hesaplanıyor...")
-    puanA = takimA.durum()
-    puanB = takimB.durum()
+        sahne([f"{takimlar[1][0]} savunuyor..."], renk="\033[94m", bekle=1)
+        if not calistir_fonksiyon(modB, "savun"):
+            sahne([f"🏆 {takimlar[0][0]} kazandı!"], renk="\033[92m", bekle=3)
+            return
 
-    print("\n🏁 Savaş Sonucu:")
-    print(f"{takimA.isim}: {puanA} puan")
-    print(f"{takimB.isim}: {puanB} puan")
+        # Takım B saldırıyor, Takım A savunuyor
+        sabotaj_et(takimlar[0][1], "saldir")
+        modA = dinamik_import(takimlar[0][1], "kodkalkani")
+        modB = dinamik_import(takimlar[1][1], "zer0byte")
 
-    if puanA > puanB:
-        print(f"🏆 {takimA.isim} kazandı!")
-    elif puanB > puanA:
-        print(f"🏆 {takimB.isim} kazandı!")
-    else:
-        print("🤝 Berabere!")
+        sahne([f"{takimlar[1][0]} saldırıyor..."], renk="\033[92m", bekle=1)
+        if not calistir_fonksiyon(modB, "saldir"):
+            sahne([f"🏆 {takimlar[0][0]} kazandı!"], renk="\033[91m", bekle=3)
+            return
+
+        sahne([f"{takimlar[0][0]} savunuyor..."], renk="\033[94m", bekle=1)
+        if not calistir_fonksiyon(modA, "savun"):
+            sahne([f"🏆 {takimlar[1][0]} kazandı!"], renk="\033[92m", bekle=3)
+            return
+
+    sahne(["🏁 Savaş berabere bitti!"], renk="\033[96m", bekle=3)
 
 if __name__ == "__main__":
-    baslat_giris_animasyonu()
-    takimA, takimB = yukle_takimlar()
-    baslat_savas(takimA, takimB)
+    intro()
+    savas()
