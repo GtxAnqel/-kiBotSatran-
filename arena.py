@@ -1,79 +1,53 @@
 import time
-from sistem.sahne_yazici import sahne, yaz, temizle
-from sistem.saldiri_motoru import sabotaj_et
-import importlib.util
-import sys
-import traceback
+import random
+from sistem.sabotaj import sabotaj_et
+from sistem.onar import onar
+from sistem.sahne_yazici import sahne_yaz
 
-def dinamik_import(dosya_yolu, modul_adi):
-    spec = importlib.util.spec_from_file_location(modul_adi, dosya_yolu)
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    return mod
+# Takımlar
+takimlar = {
+    "zer0byte": {
+        "dosya": "takimlar/zer0byte.py",
+        "yedek": "yedekler/zer0byte_backup.py",
+        "kritik": ["saldir", "savun"]
+    },
+    "kodkalkani": {
+        "dosya": "takimlar/kodkalkani.py",
+        "yedek": "yedekler/kodkalkani_backup.py",
+        "kritik": ["saldir", "savun"]
+    }
+}
 
-def intro():
-    temizle()
-    yaz("//..//", hiz=0.05, renk="\033[90m")
-    time.sleep(0.5)
-    yaz("KOD SAVAŞI BAŞLIYOR...\n", hiz=0.08, renk="\033[92m")
+sahne_yaz("🎮 KOD SAVAŞI BAŞLIYOR...\n", hiz=0.07)
+time.sleep(1)
+print()
+
+tur_sayisi = 5
+
+for tur in range(1, tur_sayisi + 1):
+    sahne_yaz(f"\n🌀 {tur}. TUR BAŞLIYOR...\n", hiz=0.06)
     time.sleep(1)
 
-def calistir_fonksiyon(modul, fonk_adi):
-    try:
-        fonk = getattr(modul, fonk_adi)
-        fonk()
-        return True
-    except Exception as e:
-        sahne([
-            f"💥 Hata! Fonksiyon '{fonk_adi}' çalıştırılamadı.",
-            f"Sebep: {str(e)}",
-        ], renk="\033[91m", bekle=2)
-        return False
+    # Saldıran ve savunan rastgele seçiliyor
+    saldiran_adi, savunan_adi = random.sample(list(takimlar.keys()), 2)
+    saldiran = takimlar[saldiran_adi]
+    savunan = takimlar[savunan_adi]
 
-def savas():
-    takimlar = [
-        ("KodKalkanı", "takimlar/kodkalkani.py"),
-        ("Zer0Byte", "takimlar/zer0byte.py")
-    ]
+    sahne_yaz(f"💥 {saldiran_adi.upper()} ekibi saldırıyor!", hiz=0.04)
+    hedef_fonk = random.choice(savunan["kritik"])
+    sahne_yaz(f"🎯 Hedef: {hedef_fonk} fonksiyonu", hiz=0.04)
+    time.sleep(1)
 
-    importlib.invalidate_caches()
+    # Saldırı
+    sabotaj_basarili = sabotaj_et(savunan["dosya"], hedef_fonk)
 
-    for round_num in range(1, 4):
-        temizle()
-        sahne([f"🔥 Raund {round_num} Başlıyor!"], renk="\033[93m", bekle=1)
+    # Savunma
+    sahne_yaz(f"🛡️ {savunan_adi.upper()} savunma sistemini devreye sokuyor...", hiz=0.04)
+    onarildi = onar(savunan["dosya"], savunan["yedek"], savunan["kritik"])
+    time.sleep(1)
 
-        # Takım A saldırıyor, Takım B savunuyor
-        sabotaj_et(takimlar[1][1], "saldir")
-        modA = dinamik_import(takimlar[0][1], "kodkalkani")
-        modB = dinamik_import(takimlar[1][1], "zer0byte")
+    # Sahne geçişi
+    print("\n" + "="*40 + "\n")
+    time.sleep(2)
 
-        sahne([f"{takimlar[0][0]} saldırıyor..."], renk="\033[92m", bekle=1)
-        if not calistir_fonksiyon(modA, "saldir"):
-            sahne([f"🏆 {takimlar[1][0]} kazandı!"], renk="\033[91m", bekle=3)
-            return
-
-        sahne([f"{takimlar[1][0]} savunuyor..."], renk="\033[94m", bekle=1)
-        if not calistir_fonksiyon(modB, "savun"):
-            sahne([f"🏆 {takimlar[0][0]} kazandı!"], renk="\033[92m", bekle=3)
-            return
-
-        # Takım B saldırıyor, Takım A savunuyor
-        sabotaj_et(takimlar[0][1], "saldir")
-        modA = dinamik_import(takimlar[0][1], "kodkalkani")
-        modB = dinamik_import(takimlar[1][1], "zer0byte")
-
-        sahne([f"{takimlar[1][0]} saldırıyor..."], renk="\033[92m", bekle=1)
-        if not calistir_fonksiyon(modB, "saldir"):
-            sahne([f"🏆 {takimlar[0][0]} kazandı!"], renk="\033[91m", bekle=3)
-            return
-
-        sahne([f"{takimlar[0][0]} savunuyor..."], renk="\033[94m", bekle=1)
-        if not calistir_fonksiyon(modA, "savun"):
-            sahne([f"🏆 {takimlar[1][0]} kazandı!"], renk="\033[92m", bekle=3)
-            return
-
-    sahne(["🏁 Savaş berabere bitti!"], renk="\033[96m", bekle=3)
-
-if __name__ == "__main__":
-    intro()
-    savas()
+sahne_yaz("\n🏁 Kod Savaşı Sona Erdi!", hiz=0.07)
