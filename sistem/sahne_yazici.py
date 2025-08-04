@@ -13,7 +13,7 @@ def yaz(metin, hiz=0.01, renk=Fore.WHITE):
         time.sleep(hiz)
     print()
 
-def sahne(metinler, hiz=0.03, renk=Fore.CYAN, bekle=2):
+def sahne_yaz(metinler, hiz=0.03, renk=Fore.CYAN, bekle=2):
     temizle()
     for satir in metinler:
         yaz(satir, hiz, renk)
